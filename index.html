@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>15 パズル</title>
+
+  <style>
+    .container {
+      width: 360px;
+      height: 360px;
+      border: 1px solid red;
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .item {
+      width: 90px;
+      height: 90px;
+      line-height: 90px;
+      border: 1px solid blue;
+      box-sizing: border-box;
+      background-color: aliceblue;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .piece-1  { order: 1;  }
+    .piece-2  { order: 2;  }
+    .piece-3  { order: 3;  }
+    .piece-4  { order: 4;  }
+    .piece-5  { order: 5;  }
+    .piece-6  { order: 6;  }
+    .piece-7  { order: 7;  }
+    .piece-8  { order: 8;  }
+    .piece-9  { order: 9;  }
+    .piece-10 { order: 10; }
+    .piece-11 { order: 11; }
+    .piece-12 { order: 12; }
+    .piece-13 { order: 13; }
+    .piece-14 { order: 14; }
+    .piece-15 { order: 15; }
+    .piece-16 { order: 16; }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <div class="item piece-1">1</div>
+    <div class="item piece-2">2</div>
+    <div class="item piece-3">3</div>
+    <div class="item piece-4">4</div>
+    <div class="item piece-5">5</div>
+    <div class="item piece-6">6</div>
+    <div class="item piece-7">7</div>
+    <div class="item piece-8">8</div>
+    <div class="item piece-9">9</div>
+    <div class="item piece-10">10</div>
+    <div class="item piece-11">11</div>
+    <div class="item piece-12">12</div>
+    <div class="item piece-13">13</div>
+    <div class="item piece-14">14</div>
+    <div class="item piece-15">15</div>
+    <div class="item piece-16"></div>
+  </div>
+
+<script>
+// [Model] "ピースの順番を管理する配列" を用意する
+var ordersModel = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ];
+
+// [Model] 空白ピース基準で、移動が許されるピースの order を格納する
+var movableOrdersModel = [ 12, 15 ];
+
+// Model → View への反映部分を作成する (そのような処理を通称 "コンポーネント" と呼ぶ)
+function component() {
+  var views = document.querySelectorAll(".item");
+
+  for (var index = 0; index <= 15; index = index + 1) {
+    // Model の内容を、対応する View に反映する
+    // 今回であれば、あるピースの順番を、CSS の order に反映する
+    views[index].style.order = ordersModel[index];
+  }
+}
+
+function shufflePieces() {
+  // Model を _.shuffle でシャッフルし、シャッフル結果を再度代入する
+  // 参考 → https://lodash.com/docs/4.17.15#shuffle
+  ordersModel = _.shuffle(ordersModel);
+}
+
+// 空白ピースに対して、上下左右のピースに対応する order 番号を求める
+function findAdjacentOfEmpty() {
+    // 全体の order を管理する Model の、16 番目が空白ピースの order
+    var emptyOrder = ordersModel[15];
+
+    movableOrdersModel = [
+        emptyOrder - 4,
+        emptyOrder + 4,
+    ];
+    
+    // 左端の order でないなら、-1 の order を左隣として考えることができる
+    if (emptyOrder % 4 !== 1) {
+        movableOrdersModel.push(emptyOrder - 1);
+    }
+
+    // 右端の order でないなら、+1 の order を右隣として考えることができる
+    if (emptyOrder % 4 !== 0) {
+        movableOrdersModel.push(emptyOrder + 1);
+    }
+
+    // 1 以上の order 番号を残す処理
+    movableOrdersModel = movableOrdersModel.filter(x => 1 <= x);
+
+    // 16 以下の order 番号を残す処理
+    movableOrdersModel = movableOrdersModel.filter(x => x <= 16);
+}
+
+function initializeTapOperations() {
+  var elements = document.querySelectorAll(".item");
+
+  // 事前に、タップされた時に行ってほしいことを関数として用意しておく
+  // 引数には Event が起こった時の詳細な情報が渡される
+  function onTapped(event) {
+    findAdjacentOfEmpty();
+
+    // タップされたピースの order を取得
+    const tappedOrder = Number(event.target.style.order);
+
+    // タップされたピースの番号を取得
+    const tappedPiece = Number(event.target.innerHTML) - 1;
+
+    // タップされたピースの order が、movableOrdersModel 配列に含まれるかを調べる
+    if (movableOrdersModel.includes(tappedOrder)) {
+      const temp = ordersModel[15];
+      ordersModel[15] = tappedOrder;
+      ordersModel[tappedPiece] = temp;
+
+      component();
+    }
+
+    // 数字が順番に並んでいるかの判定を行う
+    if (String(ordersModel) === '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16') {
+      setTimeout(() => alert('クリア！'), 0);
+    };
+  }
+
+  // elements 変数 (配列) の中身を for 文でひとつずつ取り出す
+  for (var elem of elements) {
+    // Event とは "なんらかの物事"
+    // 物事が起こった時だけ処理を行う仕組みが addEventListener
+    // 処理の登録は、事前に作成した関数を渡すことで行う
+    elem.addEventListener('click', onTapped);
+  }
+}
+
+initializeTapOperations(); // 各ピースに対して、タップ時の処理を登録する (1 回のみで OK)
+shufflePieces();           // Model をシャッフルする (1 回のみで OK)
+component();               // Model → View への反映を行う
+</script>
+</body>
+
+</html>

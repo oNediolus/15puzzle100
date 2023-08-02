@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>15 パズル</title>
+
+  <style>
+    .container {
+      width: 360px;
+      height: 360px;
+      border: 1px solid red;
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .item {
+      width: 90px;
+      height: 90px;
+      line-height: 90px;
+      border: 1px solid blue;
+      box-sizing: border-box;
+      background-color: aliceblue;
+      text-align: center;
+      vertical-align: middle;
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+
+<body>
+  <div id="app">
+    <div class="container">
+      <div
+        class="item"
+        v-for="piece in pieces"
+        v-on:click="move(piece)"
+      >
+        {{ piece }}
+      </div>
+    </div>
+    <button v-on:click="shufflePieces">シャッフルする</button>
+  </div>
+
+<script>
+Vue.createApp({
+  data() {
+    return {
+      pieces: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, '' ],
+    };
+  },
+
+  methods: {
+    shufflePieces() {
+      this.pieces = _.shuffle(this.pieces);
+    },
+
+    move(piece) {
+      const adjacentPieces = this.findAdjacentOfEmpty();
+
+      if (adjacentPieces.includes(piece)) {
+        const indexOfEmpty = this.pieces.findIndex(x => x === '');
+        const indexOfPiece = this.pieces.findIndex(x => x === piece);
+
+        [ this.pieces[indexOfEmpty], this.pieces[indexOfPiece] ] = [ this.pieces[indexOfPiece], this.pieces[indexOfEmpty] ];
+      }
+
+      if (String(this.pieces) === '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,') {
+        setTimeout(() => alert('クリア！'), 0);
+      };
+    },
+
+    findAdjacentOfEmpty() {
+      const indexOfEmpty = this.pieces.findIndex(x => x === '');
+
+      let movableIndex = [ indexOfEmpty - 4, indexOfEmpty + 4 ];
+      
+      // 空白ピースの格納場所 indexOfEmpty が 4 の倍数の時、左端にある
+      // それ以外の時 → 左側にピースが存在する
+      if (indexOfEmpty % 4 !== 0) movableIndex.push(indexOfEmpty - 1);
+
+      // 空白ピースの格納場所 indexOfEmpty が 4 の倍数 + 3 の時、右端にある
+      // それ以外の時 → 右側にピースが存在する
+      if (indexOfEmpty % 4 !== 3) movableIndex.push(indexOfEmpty + 1);
+
+      // 0 以上の格納場所を残す処理
+      movableIndex = movableIndex.filter(x => 0 <= x);
+
+      // 15 以下の格納場所を残す処理
+      movableIndex = movableIndex.filter(x => x <= 15);
+
+      // 格納場所の数値を、実際のピースの数値に変換する
+      return movableIndex.map(index => this.pieces[index]);
+    },
+  }
+}).mount('#app');
+</script>
+</body>
+
+</html>
